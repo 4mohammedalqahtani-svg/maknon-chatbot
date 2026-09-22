@@ -1,0 +1,31 @@
+# ===== إعدادات Netlify لمشروع "المساعد الذكي لجمعية مكنون" =====
+
+[build]
+  # مجلد الملفات الثابتة الذي يُنشر على الإنترنت
+  publish = "public"
+  # يعمل قبل كل نشر: يقرأ ملفات Google Drive ويبني ملف المعرفة
+  command = "npm run build"
+
+[functions]
+  # وظائف Netlify (الخادم الخلفي) — هنا يُخزَّن مفتاح OpenAI بأمان
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[dev]
+  # للتجربة محليًا عبر الأمر: netlify dev
+  publish = "public"
+  port = 8888
+
+# ترويسات أمان أساسية
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

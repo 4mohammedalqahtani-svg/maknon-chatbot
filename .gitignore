@@ -1,0 +1,9 @@
+node_modules/
+.netlify/
+.env
+.env.local
+.DS_Store
+npm-debug.log*
+
+# ملفات مُولَّدة وقت البناء
+knowledge.json

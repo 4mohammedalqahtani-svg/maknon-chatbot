@@ -1,0 +1,24 @@
+{
+  "name": "maknon-chatbot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "المساعد الذكي لجمعية مكنون لتحفيظ القرآن الكريم بالرياض",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-drive.mjs",
+    "build": "node scripts/sync-drive.mjs",
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^11.1.0",
+    "openai": "^7.21.0"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.12.3",
+    "pdf-parse": "^2.4.5"
+  }
+}

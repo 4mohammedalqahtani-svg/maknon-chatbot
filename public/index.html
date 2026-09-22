@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>المساعد الذكي | جمعية مكنون لتحفيظ القرآن الكريم</title>
+  <meta name="description" content="المساعد الذكي لجمعية مكنون لتحفيظ القرآن الكريم بالرياض — يجيب على أسئلتكم اعتمادًا على مستندات الجمعية." />
+  <meta name="theme-color" content="#0e4f45" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0a3a33" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+
+  <!-- تطبيق الوضع الليلي قبل رسم الصفحة حتى لا يحدث وميض -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('maknon-theme');
+        var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+  <!-- نموذج Netlify لحفظ التقييمات (مخفي — يُكتشف وقت النشر) -->
+  <form name="feedback" data-netlify="true" netlify-honeypot="bot-field" hidden>
+    <input type="hidden" name="form-name" value="feedback" />
+    <input type="text" name="bot-field" />
+    <input type="text" name="rating" />
+    <textarea name="question"></textarea>
+    <textarea name="answer"></textarea>
+    <input type="text" name="page" />
+  </form>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <img src="/assets/logo.png" alt="شعار جمعية مكنون لتحفيظ القرآن الكريم" class="brand-logo" />
+        <div class="brand-text">
+          <h1 class="brand-title">المساعد الذكي</h1>
+          <p class="brand-sub">جمعية مكنون لتحفيظ القرآن الكريم — الرياض</p>
+        </div>
+      </div>
+
+      <button id="themeToggle" class="icon-btn theme-toggle" type="button"
+              aria-label="تبديل الوضع الليلي" title="تبديل الوضع الليلي">
+        <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5a8.5 8.5 0 1 0 10.8 10.8z" />
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="4.2" />
+          <g class="sun-rays">
+            <path d="M12 1.6v3M12 19.4v3M22.4 12h-3M4.6 12h-3M19.4 4.6l-2.1 2.1M6.7 17.3l-2.1 2.1M19.4 19.4l-2.1-2.1M6.7 6.7 4.6 4.6" />
+          </g>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+
+    <!-- القائمة الجانبية (سطح المكتب فقط) -->
+    <aside class="sidebar" aria-label="أدوات المساعد">
+      <button id="newChatBtnSide" class="btn-new-chat" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="btn-icon">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+        محادثة جديدة
+      </button>
+
+      <section class="card card-green">
+        <h2 class="card-title">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="card-icon">
+            <path d="M12 2 9.6 9.6 2 12l7.6 2.4L12 22l2.4-7.6L22 12l-7.6-2.4z" />
+          </svg>
+          عن المساعد
+        </h2>
+        <p class="card-body">
+          مساعد آلي يجيب على أسئلتكم اعتمادًا على مستندات جمعية مكنون المعتمدة فقط.
+          إن لم يجد الإجابة لديه، فسيوجّهكم للتواصل مع الجمعية مباشرة.
+        </p>
+      </section>
+
+      <section class="card card-contact">
+        <h2 class="card-title">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="card-icon">
+            <path d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.58 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.4 11.4 0 0 0 .57 3.6 1 1 0 0 1-.25 1z" />
+          </svg>
+          للتواصل معنا
+        </h2>
+        <p class="card-body">الرقم الموحد للجمعية:</p>
+        <a class="contact-number" href="tel:920011799" dir="ltr">920011799</a>
+        <a class="contact-site" href="https://maknon.org.sa" target="_blank" rel="noopener noreferrer">
+          الموقع الرسمي للجمعية
+        </a>
+      </section>
+
+      <p class="sidebar-note">
+        الإجابات مولّدة آليًا من مستندات الجمعية، وقد تحتاج للمراجعة عند الأمور المهمة.
+      </p>
+    </aside>
+
+    <!-- منطقة المحادثة -->
+    <main class="chat" aria-label="نافذة المحادثة">
+      <div id="messages" class="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+
+      <div class="composer-wrap">
+        <form id="chatForm" class="composer" autocomplete="off">
+          <button id="newChatBtnMobile" class="icon-btn composer-new" type="button"
+                  aria-label="بدء محادثة جديدة" title="محادثة جديدة">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+
+          <textarea id="input" class="composer-input" rows="1"
+                    placeholder="اكتب سؤالك هنا…"
+                    aria-label="اكتب سؤالك" maxlength="600"></textarea>
+
+          <button id="sendBtn" class="send-btn" type="submit" aria-label="إرسال السؤال" title="إرسال">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 12 20 4l-3 8 3 8z" />
+            </svg>
+          </button>
+        </form>
+
+        <p class="composer-note">
+          لا تكتب بيانات شخصية. الإجابات مولّدة آليًا من مستندات الجمعية.
+          <span id="charCount" class="char-count" aria-live="off"></span>
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
