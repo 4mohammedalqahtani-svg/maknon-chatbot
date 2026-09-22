@@ -179,8 +179,23 @@ https://drive.google.com/drive/u/5/folders/1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K
 
 ### 4-3 رفع الملفات
 
-افتح مجلد المشروع على جهازك، واضغط بالزر الأيمن داخله ← **Open Git Bash here**
-(أو افتح Terminal/PowerShell ثم انتقل إلى مجلد المشروع)، ثم نفّذ الأوامر التالية سطرًا سطرًا:
+> 🚨 **أهم قاعدتين في هذا الدليل — اقرأهما قبل أي أمر:**
+>
+> **١) تأكد من المجلد أولًا.** كل أوامر Git تعمل على المجلد الذي تقف فيه الطرفية.
+> يجب أن يظهر أمام المؤشر: `PS C:\Users\Mnumb\maknon-chatbot>`
+> إن ظهر مجلد آخر، نفّذ أمر `cd` أدناه أولًا.
+>
+> **٢) في PowerShell أضف `.cmd`** لأوامر `npm` و`npx` و`netlify`
+> (مثل `npm.cmd install`)، وإلا ظهر خطأ `running scripts is disabled`.
+> أما `git` و`node` فتُكتب عادية.
+
+انتقل إلى مجلد المشروع:
+
+```bash
+cd C:\Users\Mnumb\maknon-chatbot
+```
+
+ثم نفّذ الأوامر التالية **سطرًا سطرًا، وانتظر انتهاء كل أمر قبل التالي**:
 
 ```bash
 git init
@@ -191,25 +206,44 @@ git add .
 ```
 
 ```bash
-git commit -m "أول نسخة من المساعد الذكي لجمعية مكنون"
+git commit -m "first version"
 ```
 
 ```bash
 git branch -M main
 ```
 
-استبدل `اسم-حسابك` باسم حسابك في GitHub ثم نفّذ:
+الآن اربط المستودع بحسابك. **انسخ السطر التالي كما هو** (اسم حسابك مكتوب فيه بالفعل):
 
 ```bash
-git remote add origin https://github.com/اسم-حسابك/maknon-chatbot.git
+git remote add origin https://github.com/4mohammedalqahtani-svg/maknon-chatbot.git
 ```
+
+> ⚠️ **لا تكتب الرابط يدويًا ولا تقسمه على سطرين.** إن ظهر لك رمز `>>` في الطرفية
+> فهذا يعني أن الأمر وصل ناقصًا — اضغط `Ctrl + C` وأعد اللصق مرة واحدة كاملة.
+
+أخيرًا ارفع الملفات:
 
 ```bash
 git push -u origin main
 ```
 
-سيطلب منك تسجيل الدخول إلى GitHub في نافذة منبثقة — أكمل التسجيل.
+سيطلب منك تسجيل الدخول إلى GitHub في نافذة منبثقة — اختر **Sign in with your browser** وأكمل.
 حدّث صفحة GitHub وستجد الملفات قد ظهرت.
+
+**لتعديل المشروع لاحقًا ورفع التغيير**، ثلاثة أوامر فقط (بعد `cd` إلى مجلد المشروع):
+
+```bash
+git add .
+```
+
+```bash
+git commit -m "تعديل"
+```
+
+```bash
+git push
+```
 
 ---
 
@@ -493,6 +527,25 @@ netlify dev
 - تأكد أنك جرّبت الضغط على 👍 أو 👎 على **الموقع المنشور** وليس محليًا.
 - أعد النشر مرة واحدة (Netlify يكتشف النموذج وقت النشر فقط).
 - تحقق أنك لم تتجاوز 100 تقييم في الشهر.
+
+### ❌ `error: src refspec main does not match any`
+
+أنت في المجلد الخطأ. نفّذ `cd C:\Users\Mnumb\maknon-chatbot` أولًا ثم أعد الأمر.
+للتأكد أنك في المكان الصحيح، نفّذ `git log --oneline -1` — يجب أن يظهر لك اسم أول commit للمشروع.
+
+### ❌ `running scripts is disabled on this system`
+
+ويندوز يمنع ملفات `.ps1`. أضف `.cmd` في نهاية اسم الأمر:
+`npm.cmd install` بدل `npm install`، و`netlify.cmd dev` بدل `netlify dev`.
+
+### ❌ ظهر رمز `>>` في الطرفية ولا يحدث شيء
+
+PowerShell ينتظر بقية أمر ناقص (غالبًا رابط انقسم على سطرين).
+اضغط `Ctrl + C` ثم أعد لصق الأمر كاملًا في سطر واحد.
+
+### ❌ `The term '...' is not recognized as the name of a cmdlet`
+
+جزء من الأمر وصل منفصلًا عن بقيته. أعد لصق الأمر مرة واحدة كاملة.
 
 ### 🔑 كيف أغيّر مفتاحًا بعد تسريبه؟
 
