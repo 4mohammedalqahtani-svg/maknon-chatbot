@@ -409,14 +409,22 @@ button, textarea, input { font-family: inherit; }
   border-radius: 20px;
   box-shadow: var(--shadow);
 }
-.greeting-star {
-  width: 52px;
-  height: 52px;
-  margin: 0 auto 10px;
+/* شعار الجمعية داخل بطاقة التحية — على خلفية بيضاء دائمًا ليبقى واضحًا في الوضعين */
+.greeting-badge {
+  display: inline-block;
+  background: #ffffff;
+  border: 2px solid var(--gold);
+  border-radius: 18px;
+  padding: 10px 18px;
+  margin-bottom: 14px;
+  line-height: 0;
+  box-shadow: var(--shadow);
+}
+
+.greeting-logo {
+  height: 72px;
+  width: auto;
   display: block;
-  fill: none;
-  stroke: var(--gold);
-  stroke-width: 1.6;
 }
 .greeting-title {
   font-size: 1.45rem;
@@ -661,6 +669,8 @@ button, textarea, input { font-family: inherit; }
   .messages { gap: 14px; }
   .greeting { padding: 20px 14px; }
   .greeting-title { font-size: 1.2rem; }
+  .greeting-logo { height: 58px; }
+  .greeting-badge { padding: 8px 14px; margin-bottom: 12px; }
   body { font-size: 15.5px; }
 }
 

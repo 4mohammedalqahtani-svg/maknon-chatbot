@@ -23,7 +23,7 @@
 
   var ICONS = {
     star: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 14.2 9.8 21.5 12l-7.3 2.2L12 21.5 9.8 14.2 2.5 12l7.3-2.2z"/></svg>',
-    starBig: '<svg class="greeting-star" viewBox="0 0 48 48" aria-hidden="true"><rect x="12" y="12" width="24" height="24"/><rect x="12" y="12" width="24" height="24" transform="rotate(45 24 24)"/></svg>',
+    markBadge: '<span class="greeting-badge"><img class="greeting-logo" src="/assets/mark.png" alt="شعار جمعية مكنون" width="306" height="240" /></span>',
     user: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
     copy: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>',
     check: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5 9 17.5 20 6.5"/></svg>',
@@ -116,7 +116,7 @@
     var box = document.createElement('div');
     box.className = 'greeting';
     box.innerHTML =
-      ICONS.starBig +
+      ICONS.markBadge +
       '<h2 class="greeting-title">' + escapeHtml(GREETING) + '</h2>' +
       '<p class="greeting-sub">اسألني عن برامج الجمعية وخدماتها وشروط التسجيل وأوقات الحلقات.</p>';
     messagesEl.appendChild(box);
