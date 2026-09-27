@@ -30,6 +30,52 @@ const CHUNK_CHARS = 1400; // حجم المقطع الواحد في وضع embedd
 const CHUNK_OVERLAP = 200; // تداخل بين المقاطع حتى لا تُقطع المعلومة
 
 /* ------------------------------------------------------------------ */
+/* حماية الخصوصية                                                      */
+/* ------------------------------------------------------------------ */
+
+// الموقع عام، لذلك يُستبعد تلقائيًا أي ملف أو مجلد يحمل في اسمه إحدى هذه الكلمات.
+// يمكن استبدال القائمة كاملة عبر المتغير DRIVE_EXCLUDE_PATTERNS (مفصولة بفاصلة).
+const DEFAULT_EXCLUDE = [
+  'سري', 'سرية', 'خاص', 'خاصة', 'داخلي', 'داخلية', 'لا ينشر', 'لا تنشر',
+  'موظف', 'موظفين', 'منسوبي', 'المنسوبين', 'كادر', 'الكادر',
+  'راتب', 'رواتب', 'مسير', 'مكافآ', 'بدلات',
+  'هوية', 'هويات', 'السجل المدني', 'جوال', 'جوالات', 'أرقام التواصل',
+  'بيانات شخصية', 'سيرة ذاتية', 'سير ذاتية', 'عقد', 'عقود', 'تقييم أداء',
+  'كشف أسماء', 'قائمة أسماء', 'قوائم أسماء', 'مستفيدين', 'المستفيدين',
+  'متبرع', 'متبرعين', 'حساب بنكي', 'ايبان', 'آيبان',
+  'private', 'confidential', 'internal', 'salaries', 'employees', 'staff',
+];
+
+const EXCLUDE_PATTERNS = (process.env.DRIVE_EXCLUDE_PATTERNS || '')
+  .split(',').map((s) => s.trim()).filter(Boolean);
+
+const EXCLUDE_LIST = EXCLUDE_PATTERNS.length ? EXCLUDE_PATTERNS : DEFAULT_EXCLUDE;
+
+/** يعيد الكلمة المطابقة إن كان الاسم يدل على محتوى غير قابل للنشر */
+function matchExcluded(name) {
+  const n = String(name).toLowerCase();
+  return EXCLUDE_LIST.find((w) => n.includes(String(w).toLowerCase())) || null;
+}
+
+// أنماط البيانات الشخصية التي نفحص النصوص بحثًا عنها
+const PII_CHECKS = [
+  { label: 'أرقام جوال سعودية', re: /(?:\+?966|00966|0)?5\d{8}/g },
+  { label: 'أرقام هوية أو سجل مدني', re: /(?<!\d)[12]\d{9}(?!\d)/g },
+  { label: 'عناوين بريد إلكتروني', re: /[\w.+-]+@[\w-]+\.[\w.]{2,}/g },
+  { label: 'أرقام آيبان', re: /\bSA\d{22}\b/gi },
+];
+
+/** يفحص نص ملف بحثًا عن بيانات شخصية ويعيد ملخصًا */
+function scanForPII(text) {
+  const found = [];
+  for (const { label, re } of PII_CHECKS) {
+    const hits = text.match(re);
+    if (hits && hits.length) found.push(`${label}: ${hits.length}`);
+  }
+  return found;
+}
+
+/* ------------------------------------------------------------------ */
 /* أدوات مساعدة                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -53,6 +99,11 @@ function addWarning(m) {
   warnings.push(m);
   warn(m);
 }
+
+// ملفات استُبعدت لأن أسماءها تدل على محتوى غير قابل للنشر
+const excluded = [];
+// ملفات نُشرت لكن يوجد فيها ما يشبه بيانات شخصية
+const piiAlerts = [];
 
 /** تحميل ملف .env محليًا (على Netlify تأتي المتغيرات جاهزة) */
 function loadDotEnv() {
@@ -149,10 +200,20 @@ async function listFolderRecursive(folderId, apiKey, prefix = '', depth = 0, see
     pageToken = json.nextPageToken || null;
 
     for (const f of json.files || []) {
+      const hit = matchExcluded(f.name);
+
       if (f.mimeType === 'application/vnd.google-apps.folder') {
+        if (hit) {
+          excluded.push({ label: `${prefix}${f.name}/ (مجلد كامل)`, word: hit });
+          continue;
+        }
         const sub = await listFolderRecursive(f.id, apiKey, `${prefix}${f.name}/`, depth + 1, seen);
         out.push(...sub);
       } else {
+        if (hit) {
+          excluded.push({ label: `${prefix}${f.name}`, word: hit });
+          continue;
+        }
         out.push({ ...f, folderPath: prefix });
       }
     }
@@ -398,7 +459,15 @@ async function main() {
     fail('المجلد فارغ أو غير مشارَك للعامة. لا يمكن بناء معرفة للمساعد.');
     process.exit(1);
   }
-  ok(`تم العثور على ${files.length} ملفًا`);
+  ok(`تم العثور على ${files.length} ملفًا قابلًا للنشر`);
+
+  if (excluded.length) {
+    log('');
+    log(`${C.yellow}${C.bold}استُبعد ${excluded.length} عنصرًا لحماية الخصوصية:${C.reset}`);
+    for (const e of excluded) log(`  ${C.yellow}—${C.reset} ${e.label} ${C.dim}(بسبب الكلمة: "${e.word}")${C.reset}`);
+    log(`${C.dim}  هذه العناصر لن يراها المساعد إطلاقًا.${C.reset}`);
+    log(`${C.dim}  لتعديل قائمة الاستبعاد استخدم المتغير DRIVE_EXCLUDE_PATTERNS.${C.reset}`);
+  }
   log('');
 
   /* 2) استخراج النصوص --------------------------------------------- */
@@ -417,6 +486,10 @@ async function main() {
         continue;
       }
       if (note) addWarning(`"${label}" — ${note}`);
+
+      // فحص البيانات الشخصية داخل النص المستخرج
+      const pii = scanForPII(clean);
+      if (pii.length) piiAlerts.push({ label, details: pii });
 
       docs.push({
         name: f.name,
@@ -447,6 +520,7 @@ async function main() {
   log(`${C.bold}---------------- التقرير ----------------${C.reset}`);
   log(`  ملفات نجحت:              ${docs.length}`);
   log(`  ملفات فشلت أو فارغة:     ${failedCount}`);
+  log(`  ملفات استُبعدت للخصوصية: ${excluded.length}`);
   log(`  إجمالي الأحرف:           ${human(totalChars)}`);
   log(`  إجمالي التوكنز (تقريبي): ${human(totalTokens)}`);
   log('');
@@ -553,7 +627,25 @@ async function main() {
     addWarning('حجم ملف المعرفة تجاوز 40 ميجابايت وقد يفشل نشر الوظيفة على Netlify. قلّل عدد الملفات.');
   }
 
-  /* 6) ملخص التحذيرات ---------------------------------------------- */
+  /* 6) إنذار البيانات الشخصية --------------------------------------- */
+  if (piiAlerts.length) {
+    log('');
+    log(`${C.red}${C.bold}############ إنذار خصوصية ############${C.reset}`);
+    log(`${C.red}عُثر على ما يشبه بيانات شخصية داخل ${piiAlerts.length} ملفًا سيُنشر للعامة:${C.reset}`);
+    log('');
+    for (const a of piiAlerts) {
+      log(`  ${C.red}!${C.reset} ${a.label}`);
+      log(`     ${C.dim}${a.details.join(' • ')}${C.reset}`);
+    }
+    log('');
+    log(`${C.yellow}الموقع عام يدخله أي شخص. راجع هذه الملفات فورًا:${C.reset}`);
+    log('  - إن كانت تحتوي بيانات أشخاص، انقلها خارج مجلد الدرايف المُشارَك.');
+    log('  - أو أعد تسميتها بإضافة كلمة "خاص" في بداية الاسم ليستبعدها النظام تلقائيًا.');
+    log(`${C.dim}  ملاحظة: قواعد المساعد تمنع كشف هذه البيانات، لكن الضمان الحقيقي هو ألا تصل إليه أصلًا.${C.reset}`);
+    log('');
+  }
+
+  /* 7) ملخص التحذيرات ---------------------------------------------- */
   log('');
   if (warnings.length) {
     log(`${C.yellow}${C.bold}تحذيرات تحتاج انتباهك (${warnings.length}):${C.reset}`);

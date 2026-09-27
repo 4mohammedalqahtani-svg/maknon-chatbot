@@ -10,7 +10,8 @@
   "scripts": {
     "sync": "node scripts/sync-drive.mjs",
     "build": "node scripts/sync-drive.mjs",
-    "dev": "netlify dev"
+    "dev": "netlify dev",
+    "prompt": "node scripts/show-prompt.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "^11.1.0",

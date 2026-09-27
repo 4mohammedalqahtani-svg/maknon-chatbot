@@ -7,3 +7,5 @@ npm-debug.log*
 
 # ملفات مُولَّدة وقت البناء
 knowledge.json
+
+prompt-preview.txt
