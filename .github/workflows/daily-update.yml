@@ -16,10 +16,12 @@ jobs:
     steps:
       - name: Trigger Netlify build hook
         env:
-          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+          HOOK_RAW: ${{ secrets.NETLIFY_BUILD_HOOK }}
         run: |
+          # نستخرج الرابط الصحيح حتى لو لُصق معه مسافات أو علامات تنصيص أو أسطر إضافية
+          HOOK=$(printf '%s' "$HOOK_RAW" | grep -o 'https://api\.netlify\.com/build_hooks/[A-Za-z0-9]*' | head -n 1)
           if [ -z "$HOOK" ]; then
-            echo "NETLIFY_BUILD_HOOK secret is missing (Settings > Secrets and variables > Actions)"
+            echo "::error::NETLIFY_BUILD_HOOK secret is missing or does not contain a https://api.netlify.com/build_hooks/... link"
             exit 1
           fi
           curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' "$HOOK"
