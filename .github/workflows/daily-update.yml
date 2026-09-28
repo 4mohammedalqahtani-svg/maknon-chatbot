@@ -1,0 +1,26 @@
+# تحديث معرفة المساعد الذكي تلقائيًا كل يوم
+# يرسل طلب إعادة النشر إلى Netlify، فيعيد قراءة ملفات Google Drive.
+# الموعد: الساعة 12 منتصف الليل بتوقيت الرياض (21:00 بتوقيت UTC).
+# للتحديث الفوري: GitHub > Actions > Daily knowledge update > Run workflow
+
+name: Daily knowledge update
+
+on:
+  schedule:
+    - cron: '0 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  trigger-netlify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Netlify build hook
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "NETLIFY_BUILD_HOOK secret is missing (Settings > Secrets and variables > Actions)"
+            exit 1
+          fi
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' "$HOOK"
+          echo "Netlify build triggered."
