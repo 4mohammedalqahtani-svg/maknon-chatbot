@@ -1,0 +1,7 @@
+# ضع رابط Build Hook في السطر التالي، ثم احفظ الملف باسم: build-hook.txt
+# الرابط يبدأ بـ: https://api.netlify.com/build_hooks/
+# تجده في: Netlify > Site configuration > Build & deploy > Build hooks
+#
+# لا ترفع ملف build-hook.txt إلى GitHub (مستثنى تلقائيًا في .gitignore)
+
+https://api.netlify.com/build_hooks/ضع-معرّف-الـhook-هنا
