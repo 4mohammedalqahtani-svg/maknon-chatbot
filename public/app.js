@@ -283,6 +283,19 @@
     }
   }
 
+  /**
+   * يحذف جملة "عذرًا، لم أجد إجابة..." إذا جاءت مع إجابة فعلية.
+   * إن كانت الجملة هي كل الرد، يبقى الرد كما هو.
+   */
+  function stripTrailingApology(text) {
+    var re = /\s*عذرًا،?\s*لم أجد إجابة لهذا السؤال[^\n]*?(?:920011799\.?)?\s*$/;
+    var m = text.match(re);
+    if (!m) return text;
+    var rest = text.slice(0, m.index).trim();
+    // نحذفها فقط إن بقي قبلها محتوى حقيقي
+    return rest.replace(/[\s*_\-•]+/g, '').length > 20 ? rest : text;
+  }
+
   async function ask(question) {
     addUserMessage(question);
     history.push({ role: 'user', content: question });
@@ -360,6 +373,9 @@
         history.pop();
         return;
       }
+
+      // حماية احتياطية: إن أضاف النموذج جملة الاعتذار بعد إجابة فعلية، نحذفها
+      answer = stripTrailingApology(answer);
 
       // إنهاء الفقاعة
       typing.bubble.innerHTML = renderMarkdown(answer);
