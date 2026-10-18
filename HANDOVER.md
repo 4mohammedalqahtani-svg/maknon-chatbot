@@ -172,7 +172,7 @@ maknon-chatbot/
 | `OPENAI_API_KEY` | ✅ | — | مُعلَّم كـ secret في Netlify |
 | `OPENAI_MODEL` | — | `gpt-5-mini` | |
 | `GOOGLE_API_KEY` | ✅ البناء + Functions | — | مقيَّد على Drive API فقط، مُعلَّم كـ secret |
-| `DRIVE_FOLDER_ID` | ✅ البناء + Functions | — | `1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K` |
+| `DRIVE_FOLDER_ID` | ✅ البناء + Functions | — | `1fYX8fYJv2Vn9S0FVUoRdr2ILl6AmYzgh` |
 | `DRIVE_EXCLUDE_PATTERNS` | — | القائمة المدمجة | كلمات مفصولة بفاصلة |
 | `RATE_LIMIT_PER_MINUTE` | — | `6` | |
 | `RATE_LIMIT_PER_DAY` | — | `60` | |
@@ -184,8 +184,9 @@ maknon-chatbot/
 ## ١٠. الحالة الحالية
 
 **منجز:**
-- ✅ منشور ويعمل على Netlify — الموقع `incomparable-fudge-1f9ca2.netlify.app`
-  (معرّف الموقع: `ec4ea11a-97da-435f-aec2-65d1ada327a8`)
+- ✅ منشور ويعمل على Netlify في حساب الجمعية (فريق `maknon-claude`) — الموقع `maknon-chatbot.netlify.app`
+  (معرّف الموقع: `1ad36a44-a789-4248-88f1-bc2dfdc26264`). نُقل في 18 أكتوبر 2026 من الموقع القديم
+  `incomparable-fudge-1f9ca2` (حساب شخصي). مجلد الدرايف أيضًا صار في حساب الجمعية.
 - ✅ مستودع GitHub خاص: `4mohammedalqahtani-svg/maknon-chatbot`، الفرع `main`
 - ✅ متغيرات البيئة الأربعة مضبوطة في Netlify، والمفتاحان مُعلَّمان كـ secret
 - ✅ حماية الخصوصية بثلاث طبقات (انظر القسم ٥)

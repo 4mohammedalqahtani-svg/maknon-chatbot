@@ -178,13 +178,13 @@
 رابط مجلدك هو:
 
 ```
-https://drive.google.com/drive/u/5/folders/1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K
+https://drive.google.com/drive/folders/1fYX8fYJv2Vn9S0FVUoRdr2ILl6AmYzgh
 ```
 
 **معرّف المجلد** هو الجزء الذي يأتي بعد `/folders/` مباشرة، أي:
 
 ```
-1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K
+1fYX8fYJv2Vn9S0FVUoRdr2ILl6AmYzgh
 ```
 
 احفظ هذا النص. (إن غيّرت المجلد مستقبلًا، طبّق القاعدة نفسها: خذ ما بعد `/folders/` وقبل أي `?`.)
@@ -322,7 +322,7 @@ git push
 | `OPENAI_API_KEY` | المفتاح الذي يبدأ بـ `sk-` من المرحلة 1 |
 | `OPENAI_MODEL` | `gpt-5-mini` |
 | `GOOGLE_API_KEY` | المفتاح الذي يبدأ بـ `AIza` من المرحلة 2 |
-| `DRIVE_FOLDER_ID` | `1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K` |
+| `DRIVE_FOLDER_ID` | `1fYX8fYJv2Vn9S0FVUoRdr2ILl6AmYzgh` |
 
 **متغيرات اختيارية** (أضفها فقط إن أردت تغيير القيم الافتراضية):
 
