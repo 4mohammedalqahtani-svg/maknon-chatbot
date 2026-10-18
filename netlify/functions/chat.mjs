@@ -8,7 +8,8 @@
  */
 
 import OpenAI from 'openai';
-import { knowledge, buildStaticSystemPrompt, buildContextMessage, FALLBACK_ANSWER } from './lib/prompt.mjs';
+import { buildStaticSystemPrompt, buildContextMessage, FALLBACK_ANSWER } from './lib/prompt.mjs';
+import { getKnowledge } from './lib/knowledge-store.mjs';
 import { checkRateLimit, visitorKey } from './lib/ratelimit.mjs';
 
 export const config = { path: '/api/chat' };
@@ -18,7 +19,6 @@ export const config = { path: '/api/chat' };
 /* ------------------------------------------------------------------ */
 
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
-const EMBED_MODEL = knowledge.embedModel || 'text-embedding-3-small';
 const REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'low';
 
 const MAX_QUESTION_CHARS = Number(process.env.MAX_QUESTION_CHARS || 600);
@@ -178,10 +178,11 @@ function buildModelParams(messages) {
 }
 
 /** بحث بالمتجهات داخل ملف المعرفة (بدون قاعدة بيانات خارجية) */
-async function retrievePassages(client, question) {
+async function retrievePassages(client, knowledge, question) {
   if (knowledge.mode !== 'embed' || !knowledge.vectors.length) return [];
 
-  const res = await client.embeddings.create({ model: EMBED_MODEL, input: question });
+  const model = knowledge.embedModel || 'text-embedding-3-small';
+  const res = await client.embeddings.create({ model, input: question });
   const q = res.data[0].embedding;
   let norm = 0;
   for (const x of q) norm += x * x;
@@ -271,7 +272,8 @@ export default async function handler(req, context) {
     /* لا نمنع الخدمة إذا تعطّل العدّاد */
   }
 
-  // 5) التأكد من وجود معرفة محمّلة
+  // 5) التأكد من وجود معرفة محمّلة (آخر تحديث من الدرايف)
+  const knowledge = await getKnowledge();
   if (!knowledge.builtAt || (knowledge.mode === 'full' ? !knowledge.docs.length : !knowledge.chunks.length)) {
     return errorResponse(503, 'مصادر المعرفة لم تُحمَّل بعد. يرجى التواصل مع الجمعية على الرقم الموحد 920011799.');
   }
@@ -279,11 +281,11 @@ export default async function handler(req, context) {
   // 6) الاتصال بـ OpenAI
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, maxRetries: 1, timeout: 20000 });
 
-  const messages = [{ role: 'system', content: buildStaticSystemPrompt() }];
+  const messages = [{ role: 'system', content: buildStaticSystemPrompt(knowledge) }];
 
   try {
     if (knowledge.mode === 'embed') {
-      const passages = await retrievePassages(client, question);
+      const passages = await retrievePassages(client, knowledge, question);
       messages.push({ role: 'system', content: buildContextMessage(passages) });
     }
   } catch (e) {

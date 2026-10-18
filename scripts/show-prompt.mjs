@@ -11,7 +11,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { knowledge, buildStaticSystemPrompt, GREETING, FALLBACK_ANSWER } from '../netlify/functions/lib/prompt.mjs';
+import { buildStaticSystemPrompt, GREETING, FALLBACK_ANSWER } from '../netlify/functions/lib/prompt.mjs';
+import { knowledge } from '../netlify/functions/lib/knowledge-data.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -29,7 +30,7 @@ function estimateTokens(text) {
   return Math.ceil(arabic / 2.5 + (text.length - arabic) / 4);
 }
 
-const prompt = buildStaticSystemPrompt();
+const prompt = buildStaticSystemPrompt(knowledge);
 const tokens = estimateTokens(prompt);
 
 console.log('');

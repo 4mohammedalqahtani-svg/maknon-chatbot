@@ -11,6 +11,10 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+[functions."refresh-knowledge"]
+  # مكتبات قراءة PDF وWord وExcel تُرفق كما هي بدل دمجها (pdf-parse يحتاج ملفاته الأصلية)
+  external_node_modules = ["pdf-parse", "@napi-rs/canvas", "mammoth", "exceljs"]
+
 [dev]
   # للتجربة محليًا عبر الأمر: netlify dev
   publish = "public"

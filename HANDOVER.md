@@ -25,9 +25,9 @@
 
 ```
 مجلد Google Drive (ملفات الجمعية، عام "أي شخص لديه الرابط")
-          │  يُقرأ وقت البناء فقط، لا وقت الطلب
+          │  يُقرأ كل ليلة (refresh-knowledge ← Netlify Blobs) وعند كل نشر (احتياطًا)
           ▼
-scripts/sync-drive.mjs  ──►  netlify/functions/lib/knowledge-data.mjs (مُولَّد)
+lib/drive-sync.mjs ──► Netlify Blobs "maknon-knowledge"  +  knowledge-data.mjs (مُولَّد)
           │
           ▼
 Netlify ┌──────────────────────────────────┐
@@ -55,10 +55,15 @@ maknon-chatbot/
 │       └── mark.png        علامة "مكنون" وحدها بخلفية شفافة (بطاقة التحية + أيقونة التبويب)
 ├── netlify/functions/
 │   ├── chat.mjs            الخادم الخلفي: حماية + استرجاع + بثّ + حجب البيانات الشخصية
+│   ├── refresh-schedule.mjs    مجدولة 21:00 UTC: تطلق التحديث برمز سري
+│   ├── refresh-knowledge.mjs   خلفية (15 دقيقة): تقرأ الدرايف وتحفظ المعرفة في Blobs
 │   └── lib/
 │       ├── prompt.mjs      تعليمات النظام (البرومت) + التحية + جملة الاعتذار
 │       ├── ratelimit.mjs   تحديد المعدّل (ذاكرة + Netlify Blobs مع تراجع آمن)
-│       └── knowledge-data.mjs   ← مُولَّد وقت البناء، لا يُعدَّل يدويًا
+│       ├── drive-sync.mjs       قراءة الدرايف + الاستخراج + الاستبعاد + الفحص (مشترك)
+│       ├── knowledge-store.mjs  المعرفة في Blobs؛ الشات يأخذ الأحدث منها ومن المضمَّنة
+│       ├── refresh-auth.mjs     رمز سري مشتق من OPENAI_API_KEY يحمي رابط التحديث
+│       └── knowledge-data.mjs   ← مُولَّد وقت البناء (احتياطي)، لا يُعدَّل يدويًا
 ├── scripts/
 │   ├── sync-drive.mjs      قراءة الدرايف + الاستخراج + الاستبعاد + الفحص + التقرير
 │   └── show-prompt.mjs     طباعة البرومت النهائي (npm run prompt)
@@ -76,7 +81,7 @@ maknon-chatbot/
 | اسم النموذج في `OPENAI_MODEL` | قابل للتغيير بلا لمس الكود |
 | بناء معاملات الطلب شرطيًا | عائلة gpt-5 تستخدم `max_completion_tokens` وترفض `temperature`؛ النماذج الأقدم تستخدم `max_tokens`. يوجد تراجع تلقائي عند خطأ 400. |
 | مفتاح Google API بسيط بلا OAuth ولا Service Account | ممكن لأن المجلد مشارَك "أي شخص لديه الرابط". أبسط خيار لمستخدم مبتدئ. |
-| المزامنة وقت البناء لا وقت الطلب | الملفات تتغير نادرًا؛ يوفّر زمن الاستجابة والتكلفة |
+| المزامنة ليلًا إلى Netlify Blobs لا بنشر جديد | النشر يكلّف 15 رصيدًا والخطة المجانية 300 شهريًا؛ النشر اليومي (450) أوقف الموقع في أكتوبر 2026. التحديث الليلي بوظيفة خلفية يكلّف أقل من رصيد واحد. |
 | اختيار الوضع تلقائيًا | ≤ 60,000 توكن → النص الكامل داخل البرومت الثابت (يستفيد من prompt caching). أكبر → embeddings بـ `text-embedding-3-small` وبحث تشابه داخل الملف بلا قاعدة بيانات. |
 | ترتيب البرومت ثابت | الجزء الثابت أولًا ليعمل التخزين المؤقت لدى OpenAI. **لا تضع أي شيء متغيّر (وقت، رقم جلسة) في بداية البرومت.** |
 | Google Sheets تُصدَّر كـ xlsx لا CSV | تصدير CSV يعطي الورقة الأولى فقط |
@@ -166,8 +171,8 @@ maknon-chatbot/
 |---|---|---|---|
 | `OPENAI_API_KEY` | ✅ | — | مُعلَّم كـ secret في Netlify |
 | `OPENAI_MODEL` | — | `gpt-5-mini` | |
-| `GOOGLE_API_KEY` | ✅ وقت البناء | — | مقيَّد على Drive API فقط، مُعلَّم كـ secret |
-| `DRIVE_FOLDER_ID` | ✅ وقت البناء | — | `1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K` |
+| `GOOGLE_API_KEY` | ✅ البناء + Functions | — | مقيَّد على Drive API فقط، مُعلَّم كـ secret |
+| `DRIVE_FOLDER_ID` | ✅ البناء + Functions | — | `1s6ODWJlhFRvBPF-2dPtpW2irCOxroE3K` |
 | `DRIVE_EXCLUDE_PATTERNS` | — | القائمة المدمجة | كلمات مفصولة بفاصلة |
 | `RATE_LIMIT_PER_MINUTE` | — | `6` | |
 | `RATE_LIMIT_PER_DAY` | — | `60` | |
@@ -184,7 +189,9 @@ maknon-chatbot/
 - ✅ مستودع GitHub خاص: `4mohammedalqahtani-svg/maknon-chatbot`، الفرع `main`
 - ✅ متغيرات البيئة الأربعة مضبوطة في Netlify، والمفتاحان مُعلَّمان كـ secret
 - ✅ حماية الخصوصية بثلاث طبقات (انظر القسم ٥)
-- ✅ **Build Hook أُنشئ** باسم "تحديث ملفات الدرايف" على الفرع `main`،
+- ✅ **التحديث الليلي بدون نشر** (`refresh-schedule` + `refresh-knowledge`). للتحديث الفوري:
+  Netlify ← Functions ← `refresh-schedule` ← **Run now**. حُذف GitHub Action النشر اليومي.
+- ✅ **Build Hook أُنشئ** باسم "تحديث ملفات الدرايف" على الفرع `main` (لم يعد ضروريًا، وكل استخدام يكلّف 15 رصيدًا)،
   ورابطه محفوظ في `build-hook.txt` (مستثنى من Git).
   الاستخدام: ضغطتان على `update-knowledge.bat` بعد أي تعديل في الدرايف. **مُختبر ويعمل.**
 - ✅ مثبّت على الجهاز ومسجّل الدخول: `gh` (GitHub CLI) و`netlify-cli`
@@ -222,7 +229,7 @@ maknon-chatbot/
 | `npm.cmd run sync` | قراءة الدرايف وبناء المعرفة (يطبع تقريرًا عربيًا كاملًا) |
 | `npm.cmd run build` | نفس sync — يشغّله Netlify تلقائيًا |
 | `npm.cmd run prompt` | طباعة البرومت النهائي (`-- --full` لكل شيء، `-- --save` لحفظه) |
-| `update-knowledge.bat` | ضغطتان عليه = إعادة قراءة الدرايف ونشر نسخة محدّثة |
+| `update-knowledge.bat` | نشر كامل جديد (يكلّف 15 رصيدًا) — الأفضل Run now على `refresh-schedule` |
 | `node dev-preview.mjs` | معاينة الواجهة على `localhost:8899` بإجابات وهمية بلا مفاتيح |
 | `netlify.cmd dev` | تشغيل كامل محليًا على `localhost:8888` (يحتاج `.env`) |
 

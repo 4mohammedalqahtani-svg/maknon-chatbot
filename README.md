@@ -19,10 +19,14 @@ maknon-chatbot/
 │
 ├── netlify/functions/
 │   ├── chat.mjs                 # POST /api/chat — الخادم الخلفي (بثّ + حماية)
+│   ├── refresh-schedule.mjs     # يطلق تحديث المعرفة كل ليلة (12 منتصف الليل بتوقيت الرياض)
+│   ├── refresh-knowledge.mjs    # وظيفة خلفية: تقرأ الدرايف وتحفظ المعرفة في Netlify Blobs
 │   └── lib/
 │       ├── prompt.mjs           # تعليمات النظام والضوابط الشرعية
 │       ├── ratelimit.mjs        # تحديد المعدّل (ذاكرة + Netlify Blobs)
-│       └── knowledge-data.mjs   # ← مُولَّد تلقائيًا وقت البناء
+│       ├── drive-sync.mjs       # قراءة الدرايف + الاستخراج + الاستبعاد + الفحص
+│       ├── knowledge-store.mjs  # حفظ المعرفة وقراءتها من Netlify Blobs
+│       └── knowledge-data.mjs   # ← مُولَّد تلقائيًا وقت البناء (نسخة احتياطية)
 │
 ├── scripts/sync-drive.mjs       # يقرأ الدرايف ويبني ملف المعرفة
 ├── knowledge.json               # ← مُولَّد: نسخة للمراجعة البشرية
@@ -32,8 +36,12 @@ maknon-chatbot/
 
 ## المعمارية
 
-1. **وقت البناء:** `scripts/sync-drive.mjs` يقرأ مجلد الدرايف عبر Drive API (بمفتاح API بسيط،
-   بلا OAuth ولا Service Account)، ويستخرج النص من كل الملفات، ثم يبني `knowledge-data.mjs`.
+1. **قراءة الدرايف:** `lib/drive-sync.mjs` يقرأ مجلد الدرايف عبر Drive API (بمفتاح API بسيط،
+   بلا OAuth ولا Service Account)، ويستخرج النص من كل الملفات. يحدث هذا في مكانين:
+   - **كل ليلة بدون نشر:** `refresh-schedule` يطلق `refresh-knowledge` الذي يحفظ المعرفة في
+     Netlify Blobs، فيستخدمها الشات فورًا. لا يستهلك رصيد النشر (النشر = 15 رصيدًا من 300 شهريًا).
+   - **عند كل نشر:** `scripts/sync-drive.mjs` يبني `knowledge-data.mjs` كنسخة احتياطية.
+   الشات يستخدم الأحدث من النسختين.
 2. **اختيار الوضع تلقائيًا:**
    - المحتوى ≤ 60,000 توكن → **وضع النص الكامل**: كل النصوص داخل تعليمات النظام الثابتة،
      فيستفيد تلقائيًا من التخزين المؤقت للمدخلات لدى OpenAI (خصم 90%).
@@ -69,8 +77,8 @@ netlify dev
 |---|---|---|
 | `OPENAI_API_KEY` | ✅ | — |
 | `OPENAI_MODEL` | — | `gpt-5-mini` |
-| `GOOGLE_API_KEY` | ✅ (وقت البناء) | — |
-| `DRIVE_FOLDER_ID` | ✅ (وقت البناء) | — |
+| `GOOGLE_API_KEY` | ✅ (البناء + Functions) | — |
+| `DRIVE_FOLDER_ID` | ✅ (البناء + Functions) | — |
 | `RATE_LIMIT_PER_MINUTE` | — | `6` |
 | `RATE_LIMIT_PER_DAY` | — | `60` |
 | `MAX_QUESTION_CHARS` | — | `600` |

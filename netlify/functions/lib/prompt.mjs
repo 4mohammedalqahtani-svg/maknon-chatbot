@@ -6,8 +6,6 @@
 // "التخزين المؤقت للمدخلات" (prompt caching) تلقائيًا فتقل التكلفة كثيرًا.
 // لذلك: لا تضع أي شيء متغيّر (مثل الوقت أو رقم الجلسة) داخل هذا الجزء.
 
-import { knowledge } from './knowledge-data.mjs';
-
 export const CONTACT_NUMBER = '920011799';
 
 export const FALLBACK_ANSWER =
@@ -84,7 +82,7 @@ function formatDoc(d, i) {
  * في وضع "full" يحتوي كل نصوص المستندات.
  * في وضع "embed" يحتوي القواعد فقط، والمقاطع المختارة تُرسَل في رسالة منفصلة.
  */
-export function buildStaticSystemPrompt() {
+export function buildStaticSystemPrompt(knowledge) {
   if (knowledge.mode === 'full') {
     if (!knowledge.docs.length) {
       return `${RULES}\n\n(لا توجد مستندات محمّلة حاليًا. اعتذر لكل سؤال بالجملة المذكورة في القاعدة رقم 2.)`;
@@ -107,5 +105,3 @@ export function buildContextMessage(passages) {
     .join('\n\n');
   return `# المقاطع ذات الصلة من مستندات الجمعية\n\n${body}\n\n# انتهت المقاطع\nتذكّر: هذه هي مصدرك الوحيد لهذه الإجابة.`;
 }
-
-export { knowledge };
