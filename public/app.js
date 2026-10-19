@@ -54,15 +54,26 @@
 
     function inline(s) {
       var out = escapeHtml(s);
+      // الروابط أولًا حتى لا يغيّرها تنسيق العريض والمائل
+      var links = [];
+      function keep(html) { links.push(html); return '\u0000' + (links.length - 1) + '\u0000'; }
+      out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function (m, label, url) {
+        return keep('<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>');
+      });
+      out = out.replace(/https?:\/\/[^\s<\u0000]+/g, function (url) {
+        // لا ندخل علامات الترقيم في آخر الرابط ضمنه
+        var tail = (/[.,،؛:!?)\]]+$/.exec(url) || [''])[0];
+        url = url.slice(0, url.length - tail.length);
+        return keep('<a href="' + url + '" target="_blank" rel="noopener noreferrer" dir="ltr">' + url + '</a>') + tail;
+      });
       out = out.replace(/`([^`]+)`/g, '<code>$1</code>');
       out = out.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       out = out.replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>');
       out = out.replace(/(^|[\s(])_([^_\n]+)_/g, '$1<em>$2</em>');
-      // روابط ماركداون + أرقام الهاتف
-      out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
-        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+      // أرقام الهاتف
       out = out.replace(/(^|[^\d>])(9200\d{5})(?!\d)/g,
         '$1<a href="tel:$2" dir="ltr">$2</a>');
+      out = out.replace(/\u0000(\d+)\u0000/g, function (m, i) { return links[Number(i)]; });
       return out;
     }
 

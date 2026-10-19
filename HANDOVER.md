@@ -177,7 +177,7 @@ maknon-chatbot/
 | `RATE_LIMIT_PER_MINUTE` | — | `6` | |
 | `RATE_LIMIT_PER_DAY` | — | `60` | |
 | `MAX_QUESTION_CHARS` | — | `600` | |
-| `MAX_ANSWER_TOKENS` | — | `700` | |
+| `MAX_ANSWER_TOKENS` | — | `3000` | |
 | `OPENAI_REASONING_EFFORT` | — | `low` | `minimal` أرخص وأسرع |
 | `ALLOWED_ORIGINS` | — | (فارغ) | لتضمين الشات في maknon.org.sa |
 

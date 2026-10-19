@@ -82,7 +82,7 @@ netlify dev
 | `RATE_LIMIT_PER_MINUTE` | — | `6` |
 | `RATE_LIMIT_PER_DAY` | — | `60` |
 | `MAX_QUESTION_CHARS` | — | `600` |
-| `MAX_ANSWER_TOKENS` | — | `700` |
+| `MAX_ANSWER_TOKENS` | — | `3000` |
 | `OPENAI_REASONING_EFFORT` | — | `low` |
 | `ALLOWED_ORIGINS` | — | (فارغ) |
 
