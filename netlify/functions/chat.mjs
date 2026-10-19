@@ -22,7 +22,7 @@ const MODEL = process.env.OPENAI_MODEL || 'gpt-5-mini';
 const REASONING_EFFORT = process.env.OPENAI_REASONING_EFFORT || 'low';
 
 const MAX_QUESTION_CHARS = Number(process.env.MAX_QUESTION_CHARS || 600);
-const MAX_ANSWER_TOKENS = Number(process.env.MAX_ANSWER_TOKENS || 700);
+const MAX_ANSWER_TOKENS = Number(process.env.MAX_ANSWER_TOKENS || 3000);
 const RATE_PER_MINUTE = Number(process.env.RATE_LIMIT_PER_MINUTE || 6);
 const RATE_PER_DAY = Number(process.env.RATE_LIMIT_PER_DAY || 60);
 

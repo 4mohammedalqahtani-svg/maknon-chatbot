@@ -334,7 +334,7 @@ git push
 | `RATE_LIMIT_PER_MINUTE` | `6` | أقصى عدد رسائل للزائر في الدقيقة |
 | `RATE_LIMIT_PER_DAY` | `60` | أقصى عدد رسائل للزائر في اليوم |
 | `MAX_QUESTION_CHARS` | `600` | أقصى طول للسؤال |
-| `MAX_ANSWER_TOKENS` | `700` | أقصى طول للإجابة |
+| `MAX_ANSWER_TOKENS` | `3000` | أقصى طول للإجابة (يشمل تفكير النموذج) |
 | `OPENAI_REASONING_EFFORT` | `low` | اجعلها `minimal` لتكلفة أقل وسرعة أكبر |
 | `ALLOWED_ORIGINS` | (فارغ) | نطاقات إضافية مسموح لها، مثل `https://maknon.org.sa` |
 
