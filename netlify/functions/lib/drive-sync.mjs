@@ -221,8 +221,27 @@ async function extractPdf(buffer) {
   PDFParse.setWorker(getData());
   const parser = new PDFParse({ data: new Uint8Array(buffer) });
   try {
-    const result = await parser.getText();
-    return { text: result.text || '', pages: result.total || 0 };
+    // parseHyperlinks يضع الرابط بجانب نصه، لكنه لا يلتقط كل الروابط (خاصة العربية)،
+    // لذلك نضيف في آخر كل صفحة أي رابط فيها لم يظهر في نصها
+    const result = await parser.getText({ parseHyperlinks: true });
+    let info = null;
+    try {
+      info = await parser.getInfo({ parsePageInfo: true });
+    } catch {
+      /* الروابط إضافة؛ النص يكفي إن فشلت */
+    }
+    const linksByPage = new Map((info?.pages || []).map((p) => [p.pageNumber, p.links || []]));
+    const text = result.pages
+      .map((page) => {
+        const missing = [];
+        for (const { url, text: label } of linksByPage.get(page.num) || []) {
+          if (!isWebUrl(url) || page.text.includes(url) || missing.some((m) => m.includes(url))) continue;
+          missing.push(`- ${mdLink(label, url)}`);
+        }
+        return missing.length ? `${page.text}\nروابط في هذه الصفحة:\n${missing.join('\n')}` : page.text;
+      })
+      .join('\n\n');
+    return { text, pages: result.total || 0 };
   } finally {
     await parser.destroy().catch(() => {});
   }
@@ -230,8 +249,116 @@ async function extractPdf(buffer) {
 
 async function extractDocx(buffer) {
   const mammoth = (await import('mammoth')).default;
-  const { value } = await mammoth.extractRawText({ buffer });
-  return { text: value || '' };
+  // نحوّله إلى HTML ثم نصّ، لأن extractRawText يحذف عناوين الروابط
+  const { value } = await mammoth.convertToHtml(
+    { buffer },
+    { convertImage: mammoth.images.imgElement(() => ({ src: '' })) },
+  );
+  return { text: htmlToText(value) };
+}
+
+/** يحوّل HTML بسيطًا (من mammoth) إلى نص مع إبقاء الروابط بصيغة ماركداون */
+function htmlToText(html) {
+  return decodeEntities(
+    String(html || '')
+      .replace(/<img[^>]*>/gi, '')
+      .replace(/<a\s[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (m, href, inner) => {
+        const label = inner.replace(/<[^>]+>/g, '');
+        const url = decodeEntities(href);
+        return isWebUrl(url) ? mdLink(decodeEntities(label), url) : label;
+      })
+      .replace(/<li[^>]*>/gi, '- ')
+      .replace(/<\/td>|<\/th>/gi, ' | ')
+      .replace(/<br\s*\/?>|<\/(p|li|h\d|tr|table|ul|ol)>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  );
+}
+
+function decodeEntities(s) {
+  return String(s)
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;|&#39;/g, "'")
+    .replace(/&#(\d+);/g, (m, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (m, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&amp;/g, '&');
+}
+
+/* ------------------------------------------------------------------ */
+/* الروابط                                                             */
+/* ------------------------------------------------------------------ */
+
+// الروابط تُكتب في النص بصيغة [النص](الرابط) حتى يستطيع المساعد إرسالها للزائر
+
+function isWebUrl(url) {
+  return /^https?:\/\/\S+$/i.test(String(url || '').trim());
+}
+
+function mdLink(label, url) {
+  const t = String(label || '').replace(/\s+/g, ' ').replace(/[[\]]/g, '').trim();
+  const u = String(url).trim().replace(/[()\s]/g, (c) => encodeURIComponent(c));
+  if (!t || t === u || t === url) return u;
+  return `[${t}](${u})`;
+}
+
+/** يحذف الصور المضمّنة (data:) من ماركداون مستندات Google حتى لا تملأ المعرفة */
+function stripInlineImages(md) {
+  return String(md || '')
+    .replace(/^\[[^\]]+\]:\s*<?data:[^\n]*$/gm, '')
+    .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')
+    .replace(/!\[[^\]]*\]\(data:[^)]*\)/g, '');
+}
+
+/**
+ * يقرأ ملف PowerPoint (أو عرض Google بعد تصديره كـ pptx) شريحةً شريحة،
+ * مع إبقاء الروابط. التصدير النصي من Google يحذف الروابط، لذلك لا نستخدمه.
+ */
+async function extractPptx(buffer) {
+  const JSZip = (await import('jszip')).default;
+  const zip = await JSZip.loadAsync(buffer);
+  const slides = Object.keys(zip.files)
+    .map((name) => /^ppt\/slides\/slide(\d+)\.xml$/.exec(name))
+    .filter(Boolean)
+    .sort((a, b) => Number(a[1]) - Number(b[1]));
+
+  const parts = [];
+  for (const [name, num] of slides) {
+    const xml = await zip.file(name).async('string');
+    const relsFile = zip.file(`ppt/slides/_rels/slide${num}.xml.rels`);
+    const rels = new Map();
+    if (relsFile) {
+      const relsXml = await relsFile.async('string');
+      for (const m of relsXml.matchAll(/<Relationship\b[^>]*>/g)) {
+        const id = /\bId="([^"]+)"/.exec(m[0]);
+        const target = /\bTarget="([^"]+)"/.exec(m[0]);
+        if (id && target) rels.set(id[1], decodeEntities(target[1]));
+      }
+    }
+
+    const lines = [];
+    for (const p of xml.matchAll(/<a:p\b[^>]*>([\s\S]*?)<\/a:p>/g)) {
+      // نجمع المقاطع المتتالية التي تحمل نفس الرابط في رابط واحد
+      const segs = [];
+      for (const r of p[1].matchAll(/<a:(r|fld)\b[^>]*>([\s\S]*?)<\/a:\1>|<a:br\b[^>]*\/>/g)) {
+        if (!r[2]) {
+          segs.push({ text: '\n', url: null });
+          continue;
+        }
+        const t = /<a:t>([\s\S]*?)<\/a:t>|<a:t\/>/.exec(r[2]);
+        const link = /<a:hlinkClick\b[^>]*r:id="([^"]+)"/.exec(r[2]);
+        const url = link ? rels.get(link[1]) : null;
+        const text = t && t[1] ? decodeEntities(t[1]) : '';
+        const last = segs[segs.length - 1];
+        if (last && last.url === url && url) last.text += text;
+        else segs.push({ text, url: isWebUrl(url) ? url : null });
+      }
+      const line = segs.map((s) => (s.url ? mdLink(s.text, s.url) : s.text)).join('').trim();
+      if (line) lines.push(line);
+    }
+    if (lines.length) parts.push(`### شريحة ${num}\n${lines.join('\n')}`);
+  }
+  return { text: parts.join('\n\n') };
 }
 
 /** تحويل ملف Excel إلى نص جدولي مقروء (كل الأوراق) */
@@ -252,11 +379,13 @@ async function extractXlsx(buffer) {
         } else if (v instanceof Date) {
           v = v.toISOString().slice(0, 10);
         } else if (typeof v === 'object') {
+          const link = v.hyperlink || cell.hyperlink;
           if (Array.isArray(v.richText)) v = v.richText.map((r) => r.text).join('');
-          else if (v.text != null) v = v.text;
+          else if (v.text != null) v = Array.isArray(v.text.richText) ? v.text.richText.map((r) => r.text).join('') : v.text;
           else if (v.result != null) v = v.result;
           else if (v.hyperlink != null) v = v.hyperlink;
           else v = JSON.stringify(v);
+          if (isWebUrl(link)) v = mdLink(String(v), link);
         }
         values.push(String(v).replace(/\s+/g, ' ').trim());
       });
@@ -275,11 +404,23 @@ async function extractFile(file, apiKey) {
   const ext = (name.split('.').pop() || '').toLowerCase();
 
   // ملفات Google الأصلية => تصدير
+  // التصدير النصي (text/plain) يحذف الروابط، لذلك نصدّر بصيغة تحفظها
   if (mimeType === GDOC) {
-    return { text: await driveFetch(exportUrl(id, 'text/plain', apiKey)), kind: 'مستند Google' };
+    try {
+      const md = await driveFetch(exportUrl(id, 'text/markdown', apiKey));
+      return { text: stripInlineImages(md), kind: 'مستند Google' };
+    } catch {
+      return { text: await driveFetch(exportUrl(id, 'text/plain', apiKey)), kind: 'مستند Google' };
+    }
   }
   if (mimeType === GSLIDE) {
-    return { text: await driveFetch(exportUrl(id, 'text/plain', apiKey)), kind: 'عرض Google' };
+    try {
+      const buf = await driveFetch(exportUrl(id, PPTX_MIME, apiKey), { binary: true });
+      const { text } = await extractPptx(buf);
+      return { text, kind: 'عرض Google' };
+    } catch {
+      return { text: await driveFetch(exportUrl(id, 'text/plain', apiKey)), kind: 'عرض Google' };
+    }
   }
   if (mimeType === GSHEET) {
     // نصدّره كـ xlsx حتى نقرأ كل الأوراق (تصدير CSV يعطي الورقة الأولى فقط)
@@ -322,8 +463,13 @@ async function extractFile(file, apiKey) {
   if (ext === 'doc' || mimeType === 'application/msword') {
     throw new Error('صيغة .doc القديمة غير مدعومة — افتح الملف في محرّر مستندات Google واحفظه كمستند Google أو .docx');
   }
-  if (ext === 'pptx' || ext === 'ppt' || mimeType === PPTX_MIME) {
-    throw new Error('ملفات PowerPoint غير مدعومة — حوّلها إلى "عروض Google التقديمية" داخل الدرايف');
+  if (ext === 'pptx' || mimeType === PPTX_MIME) {
+    const buf = await driveFetch(downloadUrl(id, apiKey), { binary: true });
+    const { text } = await extractPptx(buf);
+    return { text, kind: 'PowerPoint' };
+  }
+  if (ext === 'ppt' || mimeType === 'application/vnd.ms-powerpoint') {
+    throw new Error('صيغة .ppt القديمة غير مدعومة — احفظ الملف بصيغة .pptx أو حوّله إلى "عروض Google التقديمية"');
   }
 
   throw new Error(`نوع غير مدعوم (${mimeType || ext || 'غير معروف'})`);
