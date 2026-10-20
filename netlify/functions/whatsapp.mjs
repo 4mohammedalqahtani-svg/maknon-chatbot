@@ -53,7 +53,8 @@ export default async function handler(req, context) {
   // 3) تسليم كل رسالة للوظيفة الخلفية (ترد 202 فورًا وتكمل وحدها)
   const messages = extractMessages(payload);
   if (messages.length) {
-    const base = process.env.URL || context?.site?.url || new URL(req.url).origin;
+    // نفس النطاق الذي وصل إليه الطلب، حتى تعمل نسخ المعاينة (Deploy Preview) قبل الدمج
+    const base = new URL(req.url).origin || process.env.URL || context?.site?.url;
     const token = await internalToken('maknon-whatsapp-reply');
     await Promise.all(
       messages.map((m) =>
