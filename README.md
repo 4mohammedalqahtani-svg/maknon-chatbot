@@ -5,6 +5,8 @@
 
 👉 **للتنصيب خطوة بخطوة اقرأ [SETUP_AR.md](./SETUP_AR.md)** — دليل عربي كامل للمبتدئين.
 
+👉 **لربط المساعد بالواتساب اقرأ [WHATSAPP_SETUP_AR.md](./WHATSAPP_SETUP_AR.md)** — نفس المعرفة والضوابط على رقم واتساب.
+
 ---
 
 ## البنية
@@ -18,10 +20,17 @@ maknon-chatbot/
 │   └── assets/logo.png          # شعار الجمعية (محفوظ محليًا)
 │
 ├── netlify/functions/
-│   ├── chat.mjs                 # POST /api/chat — الخادم الخلفي (بثّ + حماية)
+│   ├── chat.mjs                 # POST /api/chat — الخادم الخلفي للموقع (بثّ + حماية)
+│   ├── whatsapp.mjs             # /api/whatsapp — استقبال رسائل الواتساب من ميتا (Webhook)
+│   ├── whatsapp-reply.mjs       # وظيفة خلفية: تولّد الرد وترسله عبر WhatsApp Cloud API
 │   ├── refresh-schedule.mjs     # يطلق تحديث المعرفة كل ليلة (12 منتصف الليل بتوقيت الرياض)
 │   ├── refresh-knowledge.mjs    # وظيفة خلفية: تقرأ الدرايف وتحفظ المعرفة في Netlify Blobs
 │   └── lib/
+│       ├── ai.mjs               # كل الاتصال بمزوّد الذكاء الاصطناعي (تغيير النموذج أو المزوّد هنا فقط)
+│       ├── answer.mjs           # تجهيز رسائل النموذج (التعليمات + المقاطع + السجل) — مشترك
+│       ├── redact.mjs           # حجب البيانات الشخصية من الإجابة — مشترك
+│       ├── whatsapp-api.mjs     # التحقق من توقيع ميتا + الإرسال + تنسيق الواتساب
+│       ├── whatsapp-history.mjs # آخر رسائل كل رقم في Netlify Blobs (تُنسى بعد 24 ساعة)
 │       ├── prompt.mjs           # تعليمات النظام والضوابط الشرعية
 │       ├── ratelimit.mjs        # تحديد المعدّل (ذاكرة + Netlify Blobs)
 │       ├── drive-sync.mjs       # قراءة الدرايف + الاستخراج + الاستبعاد + الفحص
@@ -85,6 +94,12 @@ netlify dev
 | `MAX_ANSWER_TOKENS` | — | `3000` |
 | `OPENAI_REASONING_EFFORT` | — | `low` |
 | `ALLOWED_ORIGINS` | — | (فارغ) |
+| `WHATSAPP_TOKEN` | للواتساب | — |
+| `WHATSAPP_PHONE_NUMBER_ID` | للواتساب | — |
+| `WHATSAPP_APP_SECRET` | للواتساب | — |
+| `WHATSAPP_VERIFY_TOKEN` | للواتساب | — |
+| `WHATSAPP_API_VERSION` | — | `v23.0` |
+| `AI_PROVIDER` | — | `openai` |
 
 ## الحماية
 
