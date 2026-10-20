@@ -4,6 +4,11 @@
 // إلى إنشاء متغير جديد. لا يعرفه إلا وظائف الموقع نفسه.
 
 export async function refreshToken() {
+  return internalToken('maknon-refresh-knowledge');
+}
+
+/** رمز سري لغرض محدد (كل غرض له رمز مختلف) — للاتصال بين وظائف الموقع نفسه */
+export async function internalToken(purpose) {
   const secret = process.env.REFRESH_SECRET || process.env.OPENAI_API_KEY || process.env.GOOGLE_API_KEY;
   if (!secret) return null;
   const key = await crypto.subtle.importKey(
@@ -13,7 +18,7 @@ export async function refreshToken() {
     false,
     ['sign']
   );
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode('maknon-refresh-knowledge'));
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(purpose));
   return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 

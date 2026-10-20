@@ -512,21 +512,19 @@ function chunkText(text, title) {
 }
 
 async function embedAll(chunks, apiKey, logger) {
-  const { default: OpenAI } = await import('openai');
-  const client = new OpenAI({ apiKey });
+  const { embed } = await import('./ai.mjs');
   const BATCH = 96;
   const vectors = [];
 
   for (let i = 0; i < chunks.length; i += BATCH) {
     const batch = chunks.slice(i, i + BATCH);
     logger.info(`حساب المتجهات ${i + 1}–${Math.min(i + BATCH, chunks.length)} من ${chunks.length} …`);
-    const res = await client.embeddings.create({
-      model: EMBED_MODEL,
-      input: batch.map((c) => `${c.title}\n\n${c.text}`),
-    });
-    for (const d of res.data) {
+    const embeddings = await embed(
+      batch.map((c) => `${c.title}\n\n${c.text}`),
+      { model: EMBED_MODEL, apiKey }
+    );
+    for (const v of embeddings) {
       // تطبيع المتجه ليصبح حساب التشابه مجرد ضرب نقطي
-      const v = d.embedding;
       let norm = 0;
       for (const x of v) norm += x * x;
       norm = Math.sqrt(norm) || 1;
