@@ -45,17 +45,21 @@
 
 الرمز الظاهر في صفحة API Setup ينتهي بعد 24 ساعة، فنحتاج رمزًا دائمًا:
 
-1. افتح https://business.facebook.com/settings ← **Users ← System users** ← **Add**.
-2. اسم المستخدم: `maknon-bot`، والدور: **Admin**.
-3. اضغط **Assign assets**: اختر التطبيق (Full control) وحساب واتساب (Full control).
-4. اضغط **Generate new token**، اختر التطبيق، ومدة الصلاحية **Never**، وفعّل الصلاحيتين:
+> واجهة ميتا تتغير باستمرار وقد تظهر بالعربية؛ المسميات العربية بين قوسين.
+
+1. افتح مباشرة: https://business.facebook.com/latest/settings/system_users
+   (أو من الإعدادات: ☰ ← **Users / المستخدمون** ← **System users / مستخدمو النظام**).
+   انتبه: صفحة **الأشخاص** ليست المطلوبة.
+2. اضغط **Add / إضافة**. اسم المستخدم: `maknon-bot`، والدور: **Admin / مسؤول**.
+3. افتح المستخدم ← **Assign assets / تعيين أصول**: اختر التطبيق (تحكم كامل) وحساب واتساب (تحكم كامل).
+4. اضغط **Generate new token / إنشاء رمز**، اختر التطبيق، ومدة الصلاحية **Never / أبدًا**، وفعّل الصلاحيتين:
    - `whatsapp_business_messaging`
    - `whatsapp_business_management`
 5. انسخ الرمز واحفظه في مكان آمن (لا يظهر مرة ثانية). هذه قيمة `WHATSAPP_TOKEN`.
 
 ## المرحلة 4: App Secret
 
-في لوحة التطبيق: **App settings ← Basic ← App secret ← Show**. انسخه.
+في لوحة التطبيق: **App settings / إعدادات التطبيق ← Basic / أساسي ← App secret / مفتاح سر التطبيق ← Show / عرض**. انسخه.
 هذه قيمة `WHATSAPP_APP_SECRET`، وبها يتأكد الخادم أن كل رسالة قادمة من ميتا فعلًا.
 
 ## المرحلة 5: المتغيرات في Netlify
